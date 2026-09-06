@@ -2,6 +2,7 @@
 // Cmd/Ctrl+C：覆蓋複製滑鼠所指連結；Opt/Alt+C：累加成清單
 
 import { toast } from './toast.js';
+import { copy } from './clipboard.js';
 
 let hoveredLinkUrl = null;
 let lastPointer = null;      // 最後一次滑鼠座標，供捲動後重新判定
@@ -41,7 +42,7 @@ document.addEventListener('mouseover', (event) => {
 }, true);
 
 document.addEventListener('mouseout', (event) => {
-    // relatedTarget 是滑鼠移入的目標；還在同一個 <a> 裡面就別清空。
+    // relatedTarget 是滑鼠移入的目標；還在同一個 <a > 裡面就別清空。
     // 註：規範保證 mouseout 後必有 mouseover，紀錄會被重設，所以少了這段也沒有
     // 可觀測的行為差異（2026-09-06 突變驗收證實）。留著是為了消掉兩個事件之間
     // hoveredLinkUrl 為 null 的空窗，屬防禦性強化，不是 bug 修復。
@@ -98,43 +99,3 @@ document.addEventListener('keydown', (event) => {
         copy(buffer.join('\n'), `已加入連結 (共 ${buffer.length} 筆)`);
     }
 }, true);
-
-// --- 剪貼簿 ---------------------------------------------------------------
-
-async function copy(text, okMsg) {
-    // navigator.clipboard 需要文件有焦點，否則直接丟 NotAllowedError
-    if (!document.hasFocus()) {
-        try { window.focus(); } catch (_) { /* ignore */ }
-    }
-    try {
-        await navigator.clipboard.writeText(text);
-        toast(okMsg);
-        return;
-    } catch (err) {
-        // http 頁面、iframe、權限被擋 → 退回 execCommand
-        if (legacyCopy(text)) {
-            toast(okMsg);
-            return;
-        }
-        console.error('[Link Quick Copier] 複製失敗:', err);
-        toast('存取剪貼簿失敗', true);
-    }
-}
-
-function legacyCopy(text) {
-    try {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.setAttribute('readonly', '');
-        Object.assign(ta.style, {
-            position: 'fixed', top: '0', left: '-9999px', opacity: '0'
-        });
-        (document.body || document.documentElement).appendChild(ta);
-        ta.select();
-        const ok = document.execCommand('copy');
-        ta.remove();
-        return ok;
-    } catch (_) {
-        return false;
-    }
-}

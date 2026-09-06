@@ -36,6 +36,48 @@
     toastTimer = setTimeout(() => capsule.classList.remove("show"), 2e3);
   }
 
+  // src/clipboard.js
+  async function copy(text, okMsg) {
+    if (!document.hasFocus()) {
+      try {
+        window.focus();
+      } catch (_) {
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast(okMsg);
+      return;
+    } catch (err) {
+      if (legacyCopy(text)) {
+        toast(okMsg);
+        return;
+      }
+      console.error("[Link Quick Copier] 複製失敗:", err);
+      toast("存取剪貼簿失敗", true);
+    }
+  }
+  function legacyCopy(text) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      Object.assign(ta.style, {
+        position: "fixed",
+        top: "0",
+        left: "-9999px",
+        opacity: "0"
+      });
+      (document.body || document.documentElement).appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      ta.remove();
+      return ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // src/content.js
   var hoveredLinkUrl = null;
   var lastPointer = null;
@@ -107,44 +149,4 @@
       copy(buffer.join("\n"), `已加入連結 (共 ${buffer.length} 筆)`);
     }
   }, true);
-  async function copy(text, okMsg) {
-    if (!document.hasFocus()) {
-      try {
-        window.focus();
-      } catch (_) {
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(text);
-      toast(okMsg);
-      return;
-    } catch (err) {
-      if (legacyCopy(text)) {
-        toast(okMsg);
-        return;
-      }
-      console.error("[Link Quick Copier] 複製失敗:", err);
-      toast("存取剪貼簿失敗", true);
-    }
-  }
-  function legacyCopy(text) {
-    try {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      Object.assign(ta.style, {
-        position: "fixed",
-        top: "0",
-        left: "-9999px",
-        opacity: "0"
-      });
-      (document.body || document.documentElement).appendChild(ta);
-      ta.select();
-      const ok = document.execCommand("copy");
-      ta.remove();
-      return ok;
-    } catch (_) {
-      return false;
-    }
-  }
 })();
