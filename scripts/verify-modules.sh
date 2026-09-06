@@ -8,10 +8,12 @@ fail() { echo "FAIL: $*"; exit 1; }
 
 # 1. 建置 + 全套測試必須綠（這是本作業唯一的成功判準）
 npm test >/tmp/lqc_test.log 2>&1 || { tail -30 /tmp/lqc_test.log; fail "npm test 未通過"; }
-grep -q '24 passed (24)' /tmp/lqc_test.log || {
-  grep -E 'Tests +' /tmp/lqc_test.log
-  fail "測試條數不是 24，測試檔被改動了"
-}
+# 下限而非固定值：日後新增測試不該讓閘門變紅，但刪測試要被抓到
+MIN_TESTS=24
+passed=$(grep -oE 'Tests +[0-9]+ passed' /tmp/lqc_test.log | grep -oE '[0-9]+' | head -1)
+[ -n "$passed" ] || { grep -E 'Tests +' /tmp/lqc_test.log; fail "讀不到測試條數"; }
+[ "$passed" -ge "$MIN_TESTS" ] || fail "測試只剩 $passed 條，低於下限 $MIN_TESTS，測試被刪了"
+grep -q 'failed' /tmp/lqc_test.log && fail "有測試失敗"
 
 # 2. 建置管線驗收必須持續通過
 bash scripts/verify-build.sh >/dev/null || fail "verify-build.sh 迴歸"

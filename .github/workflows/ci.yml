@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: 建置
+        run: npm run build
+
+      # publish/ 進版控，唯一的防線就是這一步：
+      # 重新建置後若與版控中的產物有任何差異，代表有人改了 src/ 卻沒重新建置。
+      - name: 產物必須是最新的
+        run: |
+          if ! git diff --quiet -- publish/; then
+            echo "::error::publish/ 與 src/ 不同步。請在本機執行 npm run build 後重新提交。"
+            git diff --stat -- publish/
+            git diff -- publish/ | head -100
+            exit 1
+          fi
+          echo "publish/ 與 src/ 一致"
+
+      - name: 建置管線驗收
+        run: bash scripts/verify-build.sh
+
+      - name: 測試
+        run: npx vitest run
+
+      - name: 迴歸閘門
+        run: bash scripts/verify-modules.sh
+
+      - name: 版控衛生
+        run: bash scripts/verify-hygiene.sh
