@@ -31,12 +31,18 @@ handler 裡呼叫 `stopPropagation()`,冒泡階段的監聽器收不到事件。
 
 排除的協定:`javascript:`、`about:`、`data:` —— 複製了也沒有用途。
 
-紀錄的清除時機:
+**清除**紀錄的時機:
 
 - 滑鼠移出連結到該連結之外的元素。
 - 視窗失去焦點。
-- 捲動後以 `document.elementFromPoint` 重新判定游標下的元素(滑鼠不動時不會發 `mouseover`,
-  但游標下的東西已經換了)。
+
+**重新判定**的時機:捲動。滑鼠不動時不會發 `mouseover`,但游標下的東西已經換了,
+因此捲動後以 `document.elementFromPoint` 重新查一次 —— 捲到另一個連結上會**換成**新網址,
+捲到非連結區域才清空。
+
+捲動路徑沒有事件可用,`composedPath` 派不上用場,因此改為從 `elementFromPoint` 的結果
+逐層往 shadow root 遞迴查詢(`anchorAtPoint`)。少了這段遞迴,在以 web component 包裝連結的
+網站上,指著連結捲一下滾輪快捷鍵就會失效。
 
 `mouseout` 會檢查 `relatedTarget` 是否仍在同一個 `<a>` 內。這是**防禦性強化,不是 bug 修復**:
 規範保證 `mouseout` 後必定緊接著 `mouseover`,紀錄會立即重設,少了這段沒有可觀測差異

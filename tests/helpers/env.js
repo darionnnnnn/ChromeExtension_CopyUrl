@@ -36,9 +36,14 @@ export function createEnv({ body = '', mac = false, url = 'https://example.com/'
     };
     Object.defineProperty(window.navigator, 'clipboard', { value: clipboard, configurable: true });
 
-    const exec = { calls: [], fail: false };
+    // 記下 execCommand('copy') 當下選取元素的內容。只斷言「有沒有呼叫 execCommand」
+    // 會讓「fallback 複製到錯誤內容」這種迴歸完全抓不到（2026-09-06 終檢實測）。
+    const exec = { calls: [], values: [], fail: false };
     window.document.execCommand = (cmd) => {
         exec.calls.push(cmd);
+        // jsdom 的 textarea.select() 不會設定 activeElement，改直接看當下 DOM 裡的 textarea
+        const ta = window.document.querySelector('textarea');
+        exec.values.push(ta ? ta.value : window.document.activeElement?.value);
         return !exec.fail;
     };
 
@@ -46,11 +51,14 @@ export function createEnv({ body = '', mac = false, url = 'https://example.com/'
     const elementAtPoint = { current: null };
     window.document.elementFromPoint = () => elementAtPoint.current;
 
-    window.document.hasFocus = () => true;
+    // 可切換，否則 clipboard.js 的無焦點分支永遠不執行、刪掉也全綠
+    const focus = { hasFocus: true, focusCalls: 0 };
+    window.document.hasFocus = () => focus.hasFocus;
+    window.focus = () => { focus.focusCalls += 1; focus.hasFocus = true; };
 
     window.eval(fs.readFileSync(BUNDLE_PATH, 'utf8'));
 
-    return { dom, window, document: window.document, clipboard, exec, elementAtPoint };
+    return { dom, window, document: window.document, clipboard, exec, elementAtPoint, focus };
 }
 
 /** 讀出提示膠囊的文字（需要 shadow root 為 open） */
@@ -82,6 +90,12 @@ export function pressC(env, { meta = false, ctrl = false, alt = false, repeat = 
 /** 讓 window.getSelection() 回傳一段非空選取 */
 export function selectText(env, text) {
     env.window.getSelection = () => ({ toString: () => text });
+}
+
+/** 模擬捲動：先設定游標下的元素，再派發 scroll */
+export function scrollTo(env, elementUnderPointer) {
+    env.elementAtPoint.current = elementUnderPointer;
+    env.document.dispatchEvent(new env.window.Event('scroll'));
 }
 
 /** 覆蓋複製的修飾鍵組合（依平台） */

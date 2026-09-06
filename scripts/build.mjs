@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild';
-import { copyFileSync, cpSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync, rmSync, existsSync, watch } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,6 +14,21 @@ const MANIFEST_DEST = join(PUBLISH_DIR, 'manifest.json');
 const ICONS_SRC = join(rootDir, 'icons');
 const ICONS_DEST = join(PUBLISH_DIR, 'icons');
 const OUTPUT_JS = join(PUBLISH_DIR, 'content.js');
+
+const BUILD_OPTIONS = {
+  entryPoints: [ENTRY_POINT],
+  bundle: true,
+  outfile: OUTPUT_JS,
+  // 格式必須是 IIFE：MV3 的 content script 是傳統腳本，頂層 import/export 會讓擴充直接壞掉
+  format: 'iife',
+  platform: 'browser',
+  target: 'chrome120',
+  // 不壓縮，產物要保持可讀以便除錯與審查
+  minify: false,
+  sourcemap: false,
+  // 預設 charset 是 ascii，會把中文提示字串轉成 \uXXXX，產物就不可讀了
+  charset: 'utf8',
+};
 
 const isWatchMode = process.argv.includes('--watch');
 
@@ -32,18 +47,7 @@ async function build() {
     cpSync(ICONS_SRC, ICONS_DEST, { recursive: true });
 
     // 3. 使用 esbuild 打包 content.js
-    await esbuild.build({
-      entryPoints: [ENTRY_POINT],
-      bundle: true,
-      outfile: OUTPUT_JS,
-      format: 'iife',
-      platform: 'browser',
-      target: 'chrome120',
-      minify: false,
-      sourcemap: false,
-      // 預設 charset 是 ascii，會把中文提示字串轉成 \uXXXX，產物就不可讀了
-      charset: 'utf8',
-    });
+    await esbuild.build(BUILD_OPTIONS);
 
     console.log('Build successful.');
   } catch (error) {
@@ -53,30 +57,21 @@ async function build() {
 }
 
 if (isWatchMode) {
-  // Watch 模式
-  // 注意：watch 模式下 esbuild 會持續執行，我們需要處理目錄清空邏輯
-  // 為了避免 watch 模式下每次重新建置都刪除整個目錄導致 esbuild 報錯，
-  // 我們在第一次執行前先清空，之後只針對檔案進行覆蓋。
-  
-  // 執行初始建置
   await build();
 
-  // 設定監看
+  // esbuild 的 watch 只重建 JS。manifest 與圖示也要跟著看，
+  // 否則開發時改了 manifest.json，載入中的 publish/ 不會更新。
+  const copyStatics = () => {
+    copyFileSync(MANIFEST_SRC, MANIFEST_DEST);
+    cpSync(ICONS_SRC, ICONS_DEST, { recursive: true });
+    console.log('Static assets copied.');
+  };
+  watch(MANIFEST_SRC, copyStatics);
+  watch(ICONS_SRC, { recursive: true }, copyStatics);
+
   let ctx;
   try {
-    ctx = await esbuild.context({
-      entryPoints: [ENTRY_POINT],
-      bundle: true,
-      outfile: OUTPUT_JS,
-      format: 'iife',
-      platform: 'browser',
-      target: 'chrome120',
-      minify: false,
-      sourcemap: false,
-      // 預設 charset 是 ascii，會把中文提示字串轉成 \uXXXX，產物就不可讀了
-      charset: 'utf8',
-    });
-
+    ctx = await esbuild.context(BUILD_OPTIONS);
     await ctx.watch();
     console.log('Watching for changes...');
   } catch (error) {

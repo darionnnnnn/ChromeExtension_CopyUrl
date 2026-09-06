@@ -26,6 +26,36 @@ describe('剪貼簿寫入', () => {
         expect(toastText(env)).toBe('已複製連結');
     });
 
+    // 只驗「有沒有呼叫 execCommand」抓不到 fallback 複製到錯誤內容的迴歸
+    it('fallback 實際複製的內容就是該連結網址', async () => {
+        const env = createEnv({ body: LINK });
+        env.clipboard.fail = true;
+        await copyLink(env);
+        expect(env.exec.values).toEqual(['https://a.test/c']);
+    });
+
+    it('fallback 也適用於累加清單的完整內容', async () => {
+        const env = createEnv({
+            body: '<a id="l" href="https://a.test/c">x</a><a id="m" href="https://a.test/d">y</a>',
+        });
+        env.clipboard.fail = true;
+        hover(env, env.document.getElementById('l'));
+        pressC(env, { alt: true });
+        await flush();
+        hover(env, env.document.getElementById('m'));
+        pressC(env, { alt: true });
+        await flush();
+        expect(env.exec.values.at(-1)).toBe('https://a.test/c\nhttps://a.test/d');
+    });
+
+    it('文件沒有焦點時先取得焦點再寫入', async () => {
+        const env = createEnv({ body: LINK });
+        env.focus.hasFocus = false;
+        await copyLink(env);
+        expect(env.focus.focusCalls).toBe(1);
+        expect(env.clipboard.writes).toEqual(['https://a.test/c']);
+    });
+
     it('兩條路徑都失敗時顯示錯誤提示', async () => {
         const env = createEnv({ body: LINK });
         env.clipboard.fail = true;

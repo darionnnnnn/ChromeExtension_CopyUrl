@@ -1,4 +1,5 @@
 let toastHost = null;
+let toastCapsule = null;
 let toastTimer = null;
 
 // 掛在 Shadow DOM 裡，頁面的 !important CSS 才動不到它
@@ -26,11 +27,11 @@ export function toast(message, isError = false) {
                 .capsule.show { opacity: 1; }
             </style>
             <div class="capsule"></div>`;
-        toastHost._capsule = shadow.querySelector('.capsule');
+        toastCapsule = shadow.querySelector('.capsule');
         root.appendChild(toastHost);
     }
 
-    const capsule = toastHost._capsule;
+    const capsule = toastCapsule;
     capsule.textContent = message;
     capsule.classList.toggle('error', isError);
     requestAnimationFrame(() => capsule.classList.add('show'));

@@ -14,6 +14,15 @@
     if (/^(javascript|about|data):/i.test(href)) return null;
     return href;
   }
+  function anchorAtPoint(x, y) {
+    let el = document.elementFromPoint(x, y);
+    while (el?.shadowRoot) {
+      const inner = el.shadowRoot.elementFromPoint?.(x, y);
+      if (!inner || inner === el) break;
+      el = inner;
+    }
+    return el?.closest?.("a[href]") || null;
+  }
 
   // src/state.js
   var state = {
@@ -42,8 +51,7 @@
     }, true);
     document.addEventListener("scroll", () => {
       if (!state.lastPointer) return;
-      const el = document.elementFromPoint(state.lastPointer.x, state.lastPointer.y);
-      const anchor = el?.closest?.("a[href]");
+      const anchor = anchorAtPoint(state.lastPointer.x, state.lastPointer.y);
       state.hoveredLinkUrl = usableUrl(anchor);
     }, true);
     window.addEventListener("blur", () => {
@@ -53,6 +61,7 @@
 
   // src/toast.js
   var toastHost = null;
+  var toastCapsule = null;
   var toastTimer = null;
   function toast(message, isError = false) {
     const root = document.body || document.documentElement;
@@ -77,10 +86,10 @@
                 .capsule.show { opacity: 1; }
             </style>
             <div class="capsule"></div>`;
-      toastHost._capsule = shadow.querySelector(".capsule");
+      toastCapsule = shadow.querySelector(".capsule");
       root.appendChild(toastHost);
     }
-    const capsule = toastHost._capsule;
+    const capsule = toastCapsule;
     capsule.textContent = message;
     capsule.classList.toggle("error", isError);
     requestAnimationFrame(() => capsule.classList.add("show"));

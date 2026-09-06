@@ -66,6 +66,8 @@ npm test        # 建置後跑測試（vitest + jsdom）
 
 - 累加模式**不會**接續剪貼簿中既有的內容,只累加本擴充複製過的連結。
 - 因為啟用了 `all_frames`,清單是每個 frame 各自一份,跨 iframe 不會合併。
+- 巢狀 Shadow DOM 中的連結,捲動後的重新判定逐層遞迴查詢;若網站以 `mode: 'closed'`
+  建立 shadow root,捲動後將無法偵測(事件路徑仍可,因為 `composedPath` 不受此限)。
 
 ## 授權
 

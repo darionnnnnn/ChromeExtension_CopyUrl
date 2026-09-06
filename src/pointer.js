@@ -1,4 +1,4 @@
-import { anchorFromEvent, usableUrl } from './link-target.js';
+import { anchorFromEvent, anchorAtPoint, usableUrl } from './link-target.js';
 import { state } from './state.js';
 
 export function registerPointerTracking() {
@@ -27,8 +27,7 @@ export function registerPointerTracking() {
     // 捲動時滑鼠不動也不會發 mouseover，游標下的元素卻換了 → 重新判定一次
     document.addEventListener('scroll', () => {
         if (!state.lastPointer) return;
-        const el = document.elementFromPoint(state.lastPointer.x, state.lastPointer.y);
-        const anchor = el?.closest?.('a[href]');
+        const anchor = anchorAtPoint(state.lastPointer.x, state.lastPointer.y);
         state.hoveredLinkUrl = usableUrl(anchor);
     }, true);
 

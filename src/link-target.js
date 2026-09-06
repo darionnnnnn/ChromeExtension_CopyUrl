@@ -18,3 +18,17 @@ export function usableUrl(anchor) {
     if (/^(javascript|about|data):/i.test(href)) return null;
     return href;
 }
+
+// 給捲動路徑用：elementFromPoint 回傳的是 shadow host，closest 穿不過去。
+// composedPath 是靠事件路徑穿透的，捲動時沒有事件可用，只能自己往 shadow root 遞迴問。
+// 少了這段，在任何用 web component 包連結的網站（YouTube、Gmail）上，
+// 指著連結滾一下滾輪，快捷鍵就失效。
+export function anchorAtPoint(x, y) {
+    let el = document.elementFromPoint(x, y);
+    while (el?.shadowRoot) {
+        const inner = el.shadowRoot.elementFromPoint?.(x, y);
+        if (!inner || inner === el) break;
+        el = inner;
+    }
+    return el?.closest?.('a[href]') || null;
+}

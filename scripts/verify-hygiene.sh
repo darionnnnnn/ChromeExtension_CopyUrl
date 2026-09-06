@@ -5,7 +5,8 @@
 set -uo pipefail
 fail() { echo "FAIL: $*"; exit 1; }
 
-for f in src/*.js scripts/*.mjs scripts/*.sh tests/*.js tests/helpers/*.js; do
+for f in src/*.js scripts/*.mjs scripts/*.sh scripts/*.py tests/*.js tests/helpers/*.js \
+         .github/workflows/*.yml *.json *.md docs/*.md; do
   [ -e "$f" ] || continue
   [ -n "$(tail -c 1 "$f")" ] && fail "檔尾缺換行: $f"
 done

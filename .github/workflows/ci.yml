@@ -25,9 +25,11 @@ jobs:
       # 重新建置後若與版控中的產物有任何差異，代表有人改了 src/ 卻沒重新建置。
       - name: 產物必須是最新的
         run: |
-          if ! git diff --quiet -- publish/; then
+          # 用 status --porcelain 而非 diff：diff 看不到未追蹤檔案，
+          # 新增圖示卻忘了 git add publish/ 會靜默放行，clone 後載入就缺檔
+          if [ -n "$(git status --porcelain -- publish/)" ]; then
             echo "::error::publish/ 與 src/ 不同步。請在本機執行 npm run build 後重新提交。"
-            git diff --stat -- publish/
+            git status --porcelain -- publish/
             git diff -- publish/ | head -100
             exit 1
           fi
