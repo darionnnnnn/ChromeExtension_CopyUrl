@@ -7,7 +7,11 @@ set -uo pipefail
 fail() { echo "FAIL: $*"; exit 1; }
 
 # 1. 建置 + 全套測試必須綠（這是本作業唯一的成功判準）
-npm test >/tmp/lqc_test.log 2>&1 || { tail -30 /tmp/lqc_test.log; fail "npm test 未通過"; }
+# NO_COLOR 關掉 vitest 上色，再用 sed 剝一次 ANSI 逃脫序列當保險：
+# CI（非 TTY）上 vitest 仍會上色，色碼會插在 "Tests" 與數字之間，
+# 讓下面的 regex 對不上而誤判成「讀不到測試條數」（2026-09-06 CI 實測）。
+NO_COLOR=1 npm test >/tmp/lqc_test.raw 2>&1 || { tail -30 /tmp/lqc_test.raw; fail "npm test 未通過"; }
+sed $'s/\033\[[0-9;]*[a-zA-Z]//g' /tmp/lqc_test.raw > /tmp/lqc_test.log
 # 下限而非固定值：日後新增測試不該讓閘門變紅，但刪測試要被抓到
 MIN_TESTS=24
 passed=$(grep -oE 'Tests +[0-9]+ passed' /tmp/lqc_test.log | grep -oE '[0-9]+' | head -1)

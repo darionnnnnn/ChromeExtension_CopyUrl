@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Link Quick Copier",
-  "version": "1.4",
+  "version": "1.5",
   "description": "Hover copy: Cmd/Ctrl+C (Overwrite), Opt/Alt+C (Append)",
   "icons": {
     "16": "icons/icon16.png",
