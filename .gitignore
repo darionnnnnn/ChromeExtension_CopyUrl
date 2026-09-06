@@ -11,3 +11,6 @@ riderModule.iml
 
 # Node
 node_modules/
+
+# forge 執行紀錄
+._forge/
