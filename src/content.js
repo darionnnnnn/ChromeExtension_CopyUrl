@@ -39,8 +39,10 @@ document.addEventListener('mouseover', (event) => {
 }, true);
 
 document.addEventListener('mouseout', (event) => {
-    // relatedTarget 是滑鼠移入的目標；還在同一個 <a> 裡面就別清空，
-    // 否則在有子元素（icon/span）的連結上會反覆清掉紀錄。
+    // relatedTarget 是滑鼠移入的目標；還在同一個 <a> 裡面就別清空。
+    // 註：規範保證 mouseout 後必有 mouseover，紀錄會被重設，所以少了這段也沒有
+    // 可觀測的行為差異（2026-09-06 突變驗收證實）。留著是為了消掉兩個事件之間
+    // hoveredLinkUrl 為 null 的空窗，屬防禦性強化，不是 bug 修復。
     const from = anchorFromEvent(event);
     if (!from) return;
     const to = event.relatedTarget;
