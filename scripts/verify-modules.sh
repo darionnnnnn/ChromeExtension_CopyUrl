@@ -13,7 +13,7 @@ fail() { echo "FAIL: $*"; exit 1; }
 NO_COLOR=1 npm test >/tmp/lqc_test.raw 2>&1 || { tail -30 /tmp/lqc_test.raw; fail "npm test 未通過"; }
 sed $'s/\033\[[0-9;]*[a-zA-Z]//g' /tmp/lqc_test.raw > /tmp/lqc_test.log
 # 下限而非固定值：日後新增測試不該讓閘門變紅，但刪測試要被抓到
-MIN_TESTS=31
+MIN_TESTS=37
 passed=$(grep -oE 'Tests +[0-9]+ passed' /tmp/lqc_test.log | grep -oE '[0-9]+' | head -1)
 [ -n "$passed" ] || { grep -E 'Tests +' /tmp/lqc_test.log; fail "讀不到測試條數"; }
 [ "$passed" -ge "$MIN_TESTS" ] || fail "測試只剩 $passed 條，低於下限 $MIN_TESTS，測試被刪了"

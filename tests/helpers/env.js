@@ -56,18 +56,41 @@ export function createEnv({ body = '', mac = false, url = 'https://example.com/'
     window.document.hasFocus = () => focus.hasFocus;
     window.focus = () => { focus.focusCalls += 1; focus.hasFocus = true; };
 
+    // 攔下 jsdom window 的 setTimeout：提示的自動消失若靠真實等待，測試要慢 2 秒
+    // 且不穩定。改為記下來由測試手動觸發。（node 全域的 setTimeout 不受影響，
+    // flush() 仍照常運作。）
+    const timers = {
+        pending: [],
+        runAll() {
+            const queued = timers.pending.splice(0);
+            queued.forEach(({ fn }) => fn());
+        },
+    };
+    const nativeSetTimeout = window.setTimeout.bind(window);
+    window.setTimeout = (fn, ms) => {
+        timers.pending.push({ fn, ms });
+        return timers.pending.length;
+    };
+    window.clearTimeout = () => {};
+    void nativeSetTimeout;
+
     window.eval(fs.readFileSync(BUNDLE_PATH, 'utf8'));
 
-    return { dom, window, document: window.document, clipboard, exec, elementAtPoint, focus };
+    return { dom, window, document: window.document, clipboard, exec, elementAtPoint, focus, timers };
 }
 
-/** 讀出提示膠囊的文字（需要 shadow root 為 open） */
-export function toastText(env) {
+/** 取得提示膠囊元素（需要 shadow root 為 open） */
+export function toastCapsule(env) {
     for (const el of env.document.body.querySelectorAll('*')) {
         const capsule = el.shadowRoot?.querySelector('.capsule');
-        if (capsule) return capsule.textContent;
+        if (capsule) return capsule;
     }
     return null;
+}
+
+/** 讀出提示膠囊的文字 */
+export function toastText(env) {
+    return toastCapsule(env)?.textContent ?? null;
 }
 
 export function hover(env, el) {
@@ -102,6 +125,10 @@ export function scrollTo(env, elementUnderPointer) {
 export const COPY = (mac) => (mac ? { meta: true } : { ctrl: true });
 
 /** 等待 content.js 內的 async 剪貼簿流程走完 */
+/** 等一個 jsdom 影格。show 類別是靠 requestAnimationFrame 加上的，flush() 等不到它。 */
+export const nextFrame = (env) =>
+    new Promise((resolve) => env.window.requestAnimationFrame(resolve));
+
 export const flush = async () => {
     for (let i = 0; i < 5; i += 1) await new Promise((r) => setTimeout(r, 0));
 };

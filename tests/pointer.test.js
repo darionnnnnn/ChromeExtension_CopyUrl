@@ -53,4 +53,14 @@ describe('捲動後重新判定游標下的連結', () => {
         await flush();
         expect(env.clipboard.writes).toHaveLength(0);
     });
+
+    // SPEC 明列視窗失焦要清除紀錄
+    it('視窗失去焦點時清空紀錄', async () => {
+        const env = createEnv({ body: '<a id="a" href="https://a.test/1">1</a>' });
+        hover(env, env.document.getElementById('a'));
+        env.window.dispatchEvent(new env.window.Event('blur'));
+        pressC(env, COPY(false));
+        await flush();
+        expect(env.clipboard.writes).toHaveLength(0);
+    });
 });
