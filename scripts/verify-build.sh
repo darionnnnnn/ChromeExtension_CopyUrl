@@ -30,7 +30,9 @@ for msg in 已複製連結 已存在 未重複加入 存取剪貼簿失敗; do
 done
 
 # 監聽器數量必須與來源一致
-src_n=$(grep -c 'addEventListener' src/content.js)
+# 註:要數整個 src/ 而不是單一檔案 —— 監聽器會隨模組拆分散到各檔,
+# 只數 content.js 會在拆分時必然不符(2026-09-06 誤擋 D-4 四輪)。
+src_n=$(cat src/*.js | grep -c 'addEventListener')
 out_n=$(grep -c 'addEventListener' publish/content.js)
 [ "$src_n" = "$out_n" ] || fail "addEventListener 數量不符:來源 $src_n,產物 $out_n"
 
