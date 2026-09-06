@@ -1,0 +1,19 @@
+{
+  "name": "link-quick-copier",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Chrome extension: copy the URL of the link under the cursor with a keystroke",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "test": "npm run build && vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "jsdom": "^26.0.0",
+    "vitest": "^3.0.0"
+  }
+}
