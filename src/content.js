@@ -3,6 +3,7 @@
 
 import { toast } from './toast.js';
 import { copy } from './clipboard.js';
+import { anchorFromEvent, usableUrl } from './link-target.js';
 
 let hoveredLinkUrl = null;
 let lastPointer = null;      // 最後一次滑鼠座標，供捲動後重新判定
@@ -13,25 +14,6 @@ const isMac = /mac/i.test(
 );
 
 // --- 連結偵測 -------------------------------------------------------------
-
-// 用 composedPath 才能穿透 Shadow DOM；event.target 在 document 層級會被 retarget
-// 成 shadow host，導致大量現代網站（web component）的連結偵測不到。
-function anchorFromEvent(event) {
-    const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
-    for (const node of path) {
-        if (node instanceof HTMLAnchorElement && node.href) return node;
-        if (node?.nodeName === 'A' && node.getAttribute?.('href')) return node;
-    }
-    return event.target?.closest?.('a[href]') || null;
-}
-
-function usableUrl(anchor) {
-    const href = anchor?.href;
-    if (!href) return null;
-    // javascript: / about:blank 之類複製了也沒用
-    if (/^(javascript|about|data):/i.test(href)) return null;
-    return href;
-}
 
 document.addEventListener('mouseover', (event) => {
     if (typeof event.clientX === 'number') {

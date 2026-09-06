@@ -78,13 +78,7 @@
     }
   }
 
-  // src/content.js
-  var hoveredLinkUrl = null;
-  var lastPointer = null;
-  var buffer = [];
-  var isMac = /mac/i.test(
-    navigator.userAgentData?.platform || navigator.platform || ""
-  );
+  // src/link-target.js
   function anchorFromEvent(event) {
     const path = typeof event.composedPath === "function" ? event.composedPath() : [];
     for (const node of path) {
@@ -99,6 +93,14 @@
     if (/^(javascript|about|data):/i.test(href)) return null;
     return href;
   }
+
+  // src/content.js
+  var hoveredLinkUrl = null;
+  var lastPointer = null;
+  var buffer = [];
+  var isMac = /mac/i.test(
+    navigator.userAgentData?.platform || navigator.platform || ""
+  );
   document.addEventListener("mouseover", (event) => {
     if (typeof event.clientX === "number") {
       lastPointer = { x: event.clientX, y: event.clientY };

@@ -30,7 +30,12 @@ for msg in "已複製連結" "此連結已存在,未重複加入" "已加入連�
   grep -rqF "$msg" src/ || fail "提示字串遺失或被改寫: $msg"
 done
 
-# 5. manifest 與測試檔不得被動到
+# 5. 每個原始檔結尾都要有換行（gemma-4 連續三次漏掉，交給驗證迴圈自己收斂）
+for f in src/*.js scripts/*.mjs; do
+  [ -n "$(tail -c 1 "$f")" ] && fail "檔尾缺換行: $f"
+done
+
+# 6. manifest 與測試檔不得被動到
 git diff --quiet HEAD -- manifest.json tests/ package.json || fail "改到了不該改的檔案"
 
 echo "PASS: 模組拆分驗收通過"
