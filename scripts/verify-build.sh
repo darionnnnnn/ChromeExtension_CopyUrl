@@ -29,12 +29,14 @@ for msg in 已複製連結 已存在 未重複加入 存取剪貼簿失敗; do
   grep -q "$msg" publish/content.js || fail "產物遺失提示字串 $msg"
 done
 
-# 監聽器數量必須與來源一致
-# 註:要數整個 src/ 而不是單一檔案 —— 監聽器會隨模組拆分散到各檔,
-# 只數 content.js 會在拆分時必然不符(2026-09-06 誤擋 D-4 四輪)。
+# 事件監聽器的數量是行為不變式：mouseover / mouseout / scroll / blur / keydown 共 5 個。
+# 不要改成「比對 src 與產物」——產物就是從 src 建出來的，那種比對恆真、抓不到任何東西
+# （2026-09-06 實測：刪掉一個監聽器後該比對仍然通過）。
+EXPECTED_LISTENERS=5
 src_n=$(cat src/*.js | grep -c 'addEventListener')
 out_n=$(grep -c 'addEventListener' publish/content.js)
-[ "$src_n" = "$out_n" ] || fail "addEventListener 數量不符:來源 $src_n,產物 $out_n"
+[ "$src_n" = "$EXPECTED_LISTENERS" ] || fail "src/ 的監聽器有 $src_n 個，預期 $EXPECTED_LISTENERS；行為改變了就要同步更新這個數字"
+[ "$out_n" = "$EXPECTED_LISTENERS" ] || fail "產物的監聽器有 $out_n 個，預期 $EXPECTED_LISTENERS"
 
 # watch 旗標須被接受(啟動後即殺,只驗不會立刻崩潰)
 node scripts/build.mjs --watch >/dev/null 2>&1 &
