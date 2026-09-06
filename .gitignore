@@ -1,0 +1,10 @@
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+# JetBrains Rider
+.idea/
+
+# 本地備份檔
+*.bak
