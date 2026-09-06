@@ -8,3 +8,6 @@ riderModule.iml
 
 # 本地備份檔
 *.bak
+
+# 載入用的輸出目錄（由原始檔複製而成）
+publish/
