@@ -36,6 +36,8 @@ async function build() {
       target: 'chrome120',
       minify: false,
       sourcemap: false,
+      // 預設 charset 是 ascii，會把中文提示字串轉成 \uXXXX，產物就不可讀了
+      charset: 'utf8',
     });
 
     console.log('Build successful.');
@@ -66,6 +68,8 @@ if (isWatchMode) {
       target: 'chrome120',
       minify: false,
       sourcemap: false,
+      // 預設 charset 是 ascii，會把中文提示字串轉成 \uXXXX，產物就不可讀了
+      charset: 'utf8',
     });
 
     await ctx.watch();

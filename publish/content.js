@@ -55,7 +55,7 @@
       event.stopPropagation();
       const url = hoveredLinkUrl;
       buffer = [url];
-      copy(url, "\u5DF2\u8907\u88FD\u9023\u7D50");
+      copy(url, "已複製連結");
       return;
     }
     if (isOptAlt && !isCmdCtrl) {
@@ -63,11 +63,11 @@
       event.stopPropagation();
       const url = hoveredLinkUrl;
       if (buffer.includes(url)) {
-        toast(`\u5DF2\u5728\u6E05\u55AE\u4E2D (\u5171 ${buffer.length} \u7B46)`);
+        toast(`此連結已存在,未重複加入 (共 ${buffer.length} 筆)`);
         return;
       }
       buffer.push(url);
-      copy(buffer.join("\n"), `\u5DF2\u52A0\u5165\u9023\u7D50 (\u5171 ${buffer.length} \u7B46)`);
+      copy(buffer.join("\n"), `已加入連結 (共 ${buffer.length} 筆)`);
     }
   }, true);
   async function copy(text, okMsg) {
@@ -86,8 +86,8 @@
         toast(okMsg);
         return;
       }
-      console.error("[Link Quick Copier] \u8907\u88FD\u5931\u6557:", err);
-      toast("\u5B58\u53D6\u526A\u8CBC\u7C3F\u5931\u6557", true);
+      console.error("[Link Quick Copier] 複製失敗:", err);
+      toast("存取剪貼簿失敗", true);
     }
   }
   function legacyCopy(text) {
@@ -118,7 +118,7 @@
     if (!toastHost || !toastHost.isConnected) {
       toastHost = document.createElement("div");
       toastHost.style.cssText = "all:initial;position:fixed;z-index:2147483647;";
-      const shadow = toastHost.attachShadow({ mode: "closed" });
+      const shadow = toastHost.attachShadow({ mode: "open" });
       shadow.innerHTML = `
             <style>
                 .capsule {

@@ -87,7 +87,7 @@ document.addEventListener('keydown', (event) => {
         event.stopPropagation();
         const url = hoveredLinkUrl;
         if (buffer.includes(url)) {
-            toast(`已在清單中 (共 ${buffer.length} 筆)`);
+            toast(`此連結已存在,未重複加入 (共 ${buffer.length} 筆)`);
             return;
         }
         buffer.push(url);
@@ -148,7 +148,7 @@ function toast(message, isError = false) {
     if (!toastHost || !toastHost.isConnected) {
         toastHost = document.createElement('div');
         toastHost.style.cssText = 'all:initial;position:fixed;z-index:2147483647;';
-        const shadow = toastHost.attachShadow({ mode: 'closed' });
+        const shadow = toastHost.attachShadow({ mode: 'open' });
         shadow.innerHTML = `
             <style>
                 .capsule {

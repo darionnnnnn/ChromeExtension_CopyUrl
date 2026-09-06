@@ -21,6 +21,14 @@ for marker in composedPath relatedTarget elementFromPoint execCommand attachShad
   grep -q "$marker" publish/content.js || fail "產物遺失標記 $marker"
 done
 
+# 產物須保持人類可讀：非 ASCII 不得被逸出成 \uXXXX
+grep -q '\\u[0-9A-Fa-f]\{4\}' publish/content.js && fail "產物含 \\uXXXX 逸出，charset 未設為 utf8"
+
+# 使用者看得到的提示字串必須以原文出現在產物中
+for msg in 已複製連結 已存在 未重複加入 存取剪貼簿失敗; do
+  grep -q "$msg" publish/content.js || fail "產物遺失提示字串 $msg"
+done
+
 # 監聽器數量必須與來源一致
 src_n=$(grep -c 'addEventListener' src/content.js)
 out_n=$(grep -c 'addEventListener' publish/content.js)
