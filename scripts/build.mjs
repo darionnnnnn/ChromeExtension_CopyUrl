@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild';
-import { copyFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,6 +11,8 @@ const PUBLISH_DIR = join(rootDir, 'publish');
 const ENTRY_POINT = join(SRC_DIR, 'content.js');
 const MANIFEST_SRC = join(rootDir, 'manifest.json');
 const MANIFEST_DEST = join(PUBLISH_DIR, 'manifest.json');
+const ICONS_SRC = join(rootDir, 'icons');
+const ICONS_DEST = join(PUBLISH_DIR, 'icons');
 const OUTPUT_JS = join(PUBLISH_DIR, 'content.js');
 
 const isWatchMode = process.argv.includes('--watch');
@@ -25,6 +27,9 @@ async function build() {
 
     // 2. 複製 manifest.json (逐位元組完全相同)
     copyFileSync(MANIFEST_SRC, MANIFEST_DEST);
+
+    // 2b. 複製圖示 —— manifest 以相對路徑引用，publish/ 少了它們擴充會顯示預設灰塊
+    cpSync(ICONS_SRC, ICONS_DEST, { recursive: true });
 
     // 3. 使用 esbuild 打包 content.js
     await esbuild.build({

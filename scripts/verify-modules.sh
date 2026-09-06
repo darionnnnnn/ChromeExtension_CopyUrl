@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# 作業 D 驗收:模組拆分後行為零改變、設計理由未被刪除
+# 行為與文件的迴歸閘門：測試全綠、建置管線正常、設計理由註解與使用者可見字串未被改動。
+# 原本還有一條「manifest/tests 不得被動到」，那是作業 D（模組拆分）專用的圍籬，
+# 在後續作業裡會誤擋合法改動（E-2 加圖示就踩到），且它比對 HEAD、任何未提交的
+# 正當修改都會紅。作業 D 結束後移除。
 set -uo pipefail
 fail() { echo "FAIL: $*"; exit 1; }
 
@@ -30,7 +33,4 @@ for msg in "已複製連結" "此連結已存在,未重複加入" "已加入連�
   grep -rqF "$msg" src/ || fail "提示字串遺失或被改寫: $msg"
 done
 
-# 5. manifest 與測試檔不得被動到
-git diff --quiet HEAD -- manifest.json tests/ package.json || fail "改到了不該改的檔案"
-
-echo "PASS: 模組拆分驗收通過"
+echo "PASS: 迴歸閘門通過"

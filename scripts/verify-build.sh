@@ -13,6 +13,13 @@ node --check publish/content.js || fail "產物語法錯誤"
 # manifest 必須與根目錄來源逐位元組相同
 cmp -s manifest.json publish/manifest.json || fail "publish/manifest.json 與來源不一致"
 
+# manifest 宣告的每個圖示都必須實際存在於產物中
+for size in 16 32 48 128; do
+  [ -f "publish/icons/icon${size}.png" ] || fail "產物缺少 icons/icon${size}.png"
+  grep -q "\"$size\": \"icons/icon${size}.png\"" publish/manifest.json \
+    || fail "manifest 未宣告 ${size}px 圖示"
+done
+
 # MV3 content script 是傳統腳本:產物不得含頂層 import/export
 grep -Eq '^(import|export)[[:space:]]' publish/content.js && fail "產物含頂層 import/export,不是 IIFE"
 
